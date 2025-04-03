@@ -23,7 +23,7 @@ jobs:
 
     runs-on: ubuntu-latest
     services:
-      mysql_storage:
+      mysql:
         image: mysql:8.0
         ports:
           - 3306:3306

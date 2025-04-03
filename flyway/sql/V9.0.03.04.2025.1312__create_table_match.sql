@@ -1,0 +1,22 @@
+CREATE TABLE Matches(
+    id             BIGINT PRIMARY KEY,
+    match_date     TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    `status`       VARCHAR(50) NOT NULL,
+    venue          VARCHAR(255),
+    matchday       INT,
+    stage          VARCHAR(50),
+    `group`        VARCHAR(50),
+    last_updated   TIMESTAMP            DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    home_team_id   BIGINT      NOT NULL,
+    away_team_id   BIGINT      NOT NULL,
+    home_score     INT,
+    away_score     INT,
+    winner_id      BIGINT,
+    competition_id BIGINT      NOT NULL,
+    season_id      BIGINT      NOT NULL,
+    FOREIGN KEY (home_team_id) REFERENCES Team (id) ON DELETE CASCADE,
+    FOREIGN KEY (away_team_id) REFERENCES Team (id) ON DELETE CASCADE,
+    FOREIGN KEY (winner_id) REFERENCES Team (id) ON DELETE SET NULL,
+    FOREIGN KEY (competition_id) REFERENCES Competition (id) ON DELETE CASCADE,
+    FOREIGN KEY (season_id) REFERENCES Season (id) ON DELETE CASCADE
+);

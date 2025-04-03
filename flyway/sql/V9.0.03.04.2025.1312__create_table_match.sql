@@ -5,7 +5,7 @@ CREATE TABLE Matches(
     venue          VARCHAR(255),
     matchday       INT,
     stage          VARCHAR(50),
-    `group`        VARCHAR(50),
+    group_name        VARCHAR(50),
     last_updated   TIMESTAMP            DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     home_team_id   BIGINT      NOT NULL,
     away_team_id   BIGINT      NOT NULL,

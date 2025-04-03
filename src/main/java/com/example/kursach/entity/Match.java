@@ -28,6 +28,7 @@ public class Match {
 
     private String stage;
 
+    @Column(name = "group_name")
     private String group;
 
     @Column(name = "last_updated")

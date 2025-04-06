@@ -52,7 +52,7 @@ jobs:
 
       - name: Verify Test Results
         if: success()
-        run: echo "✅ Tests passed successfully"
+        run: echo "Tests passed successfully"
 
       - name: Mark Check as Failed
         if: failure()

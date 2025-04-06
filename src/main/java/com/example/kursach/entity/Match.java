@@ -1,8 +1,11 @@
 package com.example.kursach.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
 
 import java.time.LocalDateTime;
 
@@ -10,10 +13,13 @@ import java.time.LocalDateTime;
 @Table(name = "Matches")
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
+@DynamicUpdate
+@DynamicInsert
 public class Match {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+//    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "match_date", nullable = false)

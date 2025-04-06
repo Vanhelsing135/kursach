@@ -1,10 +1,15 @@
 package com.example.kursach.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
+
+import java.util.List;
 import java.util.Set;
 import java.util.HashSet;
 
@@ -14,6 +19,8 @@ import java.util.HashSet;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@DynamicUpdate
+@DynamicInsert
 public class Team {
 
     @Id
@@ -22,10 +29,10 @@ public class Team {
     @Column(nullable = false, length = 255)
     private String name;
 
-    @Column(length = 50)
+    @Column(name = "short_name",length = 50)
     private String shortName;
 
-    @Column(length = 10, unique = true)
+    @Column(length = 10)
     private String tla;
 
     @Column(length = 255)
@@ -33,12 +40,20 @@ public class Team {
 
     private Integer founded;
 
-    @Column(length = 100)
+    @Column(name = "club_colors", length = 100)
     private String clubColors;
 
     @Column(length = 255)
     private String venue;
 
-    @ManyToMany(mappedBy = "favoriteTeams")
-    private Set<User> usersWhoFavorited = new HashSet<>();
+    @ManyToMany
+    @JoinTable(
+            name = "team_competition",
+            joinColumns = @JoinColumn(name = "team_id"),
+            inverseJoinColumns = @JoinColumn(name = "competition_id")
+    )
+    private List<Competition> runningCompetitions;
+
+    @OneToMany(mappedBy = "teamId", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Player> squad;
 }

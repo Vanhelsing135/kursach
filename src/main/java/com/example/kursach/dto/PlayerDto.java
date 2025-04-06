@@ -1,32 +1,21 @@
-package com.example.kursach.entity;
+package com.example.kursach.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.hibernate.annotations.DynamicInsert;
-import org.hibernate.annotations.DynamicUpdate;
+import lombok.*;
 
 import java.time.LocalDate;
 import java.sql.Timestamp;
 
-@Entity
-@Table(name = "Player")
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@DynamicUpdate
-@DynamicInsert
-public class Player {
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class PlayerDto {
 
     @Id
     private Long id;
-
-    @Column(name = "team_id")
-    private Long teamId;
 
     @Column(nullable = false)
     private String name;
@@ -49,4 +38,14 @@ public class Player {
 
     @Column(name = "last_updated")
     private String lastUpdated;
+
+    private CurTeamDto currentTeam;
+
+    @Data
+    @Getter
+    @Setter
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class CurTeamDto{
+        private Long id;
+    }
 }

@@ -1,8 +1,12 @@
 package com.example.kursach.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.DynamicInsert;
+import org.hibernate.annotations.DynamicUpdate;
 
 import java.time.LocalDate;
 
@@ -10,20 +14,24 @@ import java.time.LocalDate;
 @Table(name = "Season")
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@DynamicUpdate
+@DynamicInsert
 public class Season {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+//    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne
     @JoinColumn(name = "competition_id", nullable = false)
     private Competition competition;
 
-    @Column(nullable = false)
+    @Column(name = "start_date", nullable = false)
     private LocalDate startDate;
 
-    @Column(nullable = false)
+    @Column(name = "end_date",nullable = false)
     private LocalDate endDate;
 
     @ManyToOne

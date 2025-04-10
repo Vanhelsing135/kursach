@@ -24,15 +24,8 @@ public class PlayerController {
     private final PlayerService playerService;
 
     @GetMapping("/{playerId}")
-    public ResponseEntity<Player> getTeams(@PathVariable Long playerId) throws JsonProcessingException {
-        for (int i = 1; i < 20000; i++) {
-            try {
-                playerService.getPlayerById(playerId + i);
-            } catch (Exception e) {
-                System.err.println(playerId + i);
-            }
-        }
-        return ResponseEntity.ok(null);
+    public ResponseEntity<Player> getTeams(@PathVariable Long playerId){
+        return ResponseEntity.ok(playerService.getPlayerById(playerId));
     }
 
 

@@ -1,0 +1,21 @@
+CREATE TABLE Standings (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    season_id BIGINT NOT NULL,
+    competition_id BIGINT NOT NULL,
+    team_id BIGINT NOT NULL,
+    position BIGINT NOT NULL,
+    stage VARCHAR(50) NOT NULL,
+    type VARCHAR(50) NOT NULL,
+    played_games INT NOT NULL,
+    won INT NOT NULL,
+    draw INT NOT NULL,
+    lost INT NOT NULL,
+    goals_for INT NOT NULL,
+    goals_against INT NOT NULL,
+    goal_difference INT AS (goals_for - goals_against) STORED,
+    points INT NOT NULL,
+    form VARCHAR(50),
+    FOREIGN KEY (season_id) REFERENCES Season(id),
+    FOREIGN KEY (competition_id) REFERENCES Competition(id),
+    FOREIGN KEY (team_id) REFERENCES Team(id)
+);

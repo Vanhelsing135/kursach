@@ -12,13 +12,10 @@ public class CompetitionsApiResponse {
     private Filters filters;
     private List<Competition> competitions;
 
-    // Геттеры и сеттеры
-@Getter
-@Setter
+    @Getter
+    @Setter
     public static class Filters {
         private String client;
-
-        // Геттеры и сеттеры
     }
 
     @Getter
@@ -35,16 +32,13 @@ public class CompetitionsApiResponse {
         private int numberOfAvailableSeasons;
         private String lastUpdated;
 
-        // Геттеры и сеттеры
-@Getter
-@Setter
+        @Getter
+        @Setter
         public static class Area {
             private Long id;
             private String name;
             private String code;
             private String flag;
-
-            // Геттеры и сеттеры
         }
 
         @Getter
@@ -55,8 +49,6 @@ public class CompetitionsApiResponse {
             private String endDate;
             private int currentMatchday;
             private Winner winner;
-
-            // Геттеры и сеттеры
 
             @Getter
             @Setter
@@ -72,8 +64,6 @@ public class CompetitionsApiResponse {
                 private String clubColors;
                 private String venue;
                 private String lastUpdated;
-
-                // Геттеры и сеттеры
             }
         }
     }

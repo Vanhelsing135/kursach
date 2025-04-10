@@ -1,4 +1,4 @@
-package com.example.kursach.entity;
+package com.example.kursach.dto;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

@@ -1,17 +1,13 @@
 package com.example.kursach.service;
 
 import com.example.kursach.dto.CompetitionsApiResponse;
+import com.example.kursach.dto.StandingsDto;
+import com.example.kursach.dto.TableDto;
 import com.example.kursach.dto.TeamApiResponse;
-import com.example.kursach.entity.Player;
-import com.example.kursach.entity.Season;
-import com.example.kursach.entity.Team;
-import com.example.kursach.repository.PlayerRepository;
-import com.example.kursach.repository.SeasonRepository;
-import com.example.kursach.repository.TeamRepository;
+import com.example.kursach.entity.*;
+import com.example.kursach.repository.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.example.kursach.entity.Competition;
-import com.example.kursach.repository.CompetitionRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -43,6 +39,7 @@ public class CompetitionService {
     private final CompetitionRepository competitionRepository;
     private final SeasonRepository seasonRepository;
     private final TeamRepository teamRepository;
+    private final StandingsRepository standingsRepository;
 
     @Transactional
     public List<Competition> getCompetitions() {
@@ -147,6 +144,7 @@ public class CompetitionService {
         ResponseEntity<String> responseEntity = restTemplate.exchange(requestEntity, String.class);
 
         List<TeamApiResponse.TeamDto> teamDtos = parseTeamsFromResponse(responseEntity.getBody()).getTeams();
+
         for (TeamApiResponse.TeamDto t : teamDtos) {
             List<TeamApiResponse.TeamDto.SquadMemberDto> playersDto = t.getSquad();
             List<Player> newPlayers = new ArrayList<>();
@@ -161,15 +159,18 @@ public class CompetitionService {
                 newPlayer.setPosition(p.getPosition());
                 newPlayers.add(newPlayer);
             }
-            playerRepository.saveAll(newPlayers);
+
             List<Competition> competitions = new ArrayList<>();
             for (TeamApiResponse.CompetitionDto c : t.getRunningCompetitions()) {
                 competitions.add(new Competition(c.getId(), c.getName(), c.getCode(), c.getType(), c.getEmblem(), t.getArea().getName(), null, null, null, null));
             }
             competitionRepository.saveAll(competitions);
             if (!teamRepository.existsById(t.getId())) {
-                teams.add(new Team(t.getId(), t.getName(), t.getShortName(), t.getTla(), t.getAddress(), t.getFounded(), t.getClubColors(), t.getVenue(), competitions, newPlayers));
+//                teams.add(new Team(t.getId(), t.getName(), t.getShortName(), t.getTla(), t.getAddress(), t.getFounded(), t.getClubColors(), t.getVenue(), competitions, newPlayers));
+                teamRepository.save(new Team(t.getId(), t.getName(), t.getShortName(), t.getTla(), t.getAddress(), t.getFounded(), t.getClubColors(), t.getVenue(), competitions, newPlayers));
+
             }
+            playerRepository.saveAll(newPlayers);
         }
         teamRepository.saveAll(teams);
         return teamDtos;
@@ -193,4 +194,93 @@ public class CompetitionService {
 //    protected void saveSeason(Season season){
 //        seasonRepository.save(season);
 //    }
+
+
+    public List<TableDto> getStandings(Long competitionId) {
+        Competition competition = competitionRepository.findById(competitionId)
+                .orElseThrow(() -> new RuntimeException("Competition not found with ID: " + competitionId));
+
+        List<Standings> standings = standingsRepository.findByCompetition(competition);
+        if (!standings.isEmpty()) {
+            List<TableDto> table = new ArrayList<>();
+            for (Standings s : standings) {
+                table.add(new TableDto(s.getTeam().getName(), s.getPosition(), s.getPoints(), s.getPlayedGames(), s.getLost(), s.getWon(), s.getDraw(), s.getGoalsAgainst(), s.getGoalsFor(), s.getGoalDifference()));
+            }
+
+            return table.stream().sorted((a, b) -> Integer.compare(a.getPosition(), b.getPosition())).toList();
+
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Auth-Token", apiKey);
+
+        String url = UriComponentsBuilder.fromHttpUrl(apiUrl + "/competitions/" + competitionId + "/standings")
+                .toUriString();
+
+        RequestEntity<Void> requestEntity = RequestEntity.get(url).headers(headers).build();
+
+        ResponseEntity<String> responseEntity = restTemplate.exchange(requestEntity, String.class);
+
+        StandingsDto standingsDto = parseStandingsFromResponse(responseEntity.getBody());
+        if (!seasonRepository.existsById(standingsDto.getSeason().getId())) {
+            Season season = new Season();
+            season.setId(standingsDto.getSeason().getId());
+            season.setCompetition(competition);
+            season.setEndDate(LocalDate.parse(standingsDto.getSeason().getEndDate()));
+            season.setStartDate(LocalDate.parse(standingsDto.getSeason().getStartDate()));
+            seasonRepository.save(season);
+        }
+        List<StandingsDto.Standings.Table> stands = standingsDto.getStandings().get(0).getTable();
+        List<Standings> newStandings = new ArrayList<>();
+        for (StandingsDto.Standings.Table s : stands) {
+            Standings standings1 = new Standings();
+            standings1.setCompetition(competition);
+            standings1.setForm(s.getForm());
+            standings1.setDraw(s.getDraw());
+            standings1.setLost(s.getLost());
+            standings1.setPosition(s.getPosition());
+            standings1.setType(standingsDto.getStandings().get(0).getType());
+            standings1.setSeason(seasonRepository.findById(standingsDto.getSeason().getId()).orElseThrow());
+            standings1.setPoints(s.getPoints());
+            standings1.setGoalsAgainst(s.getGoalsAgainst());
+            standings1.setGoalsFor(s.getGoalsFor());
+            standings1.setPlayedGames(s.getPlayedGames());
+            standings1.setStage(standingsDto.getStandings().get(0).getStage());
+            standings1.setWon(s.getWon());
+            StandingsDto.Standings.Table.TeamDto teamDto = s.getTeam();
+            if (!teamRepository.existsById(teamDto.getId())) {
+                Team team = new Team();
+                team.setShortName(teamDto.getShortName());
+                team.setName(teamDto.getName());
+                team.setId(teamDto.getId());
+                team.setTla(teamDto.getTla());
+                teamRepository.save(team);
+                standings1.setTeam(team);
+            }
+            standings1.setTeam(teamRepository.findById(teamDto.getId()).orElseThrow());
+            newStandings.add(standings1);
+
+        }
+
+        standingsRepository.saveAll(newStandings);
+
+        List<TableDto> table = new ArrayList<>();
+        for (Standings s : newStandings) {
+            table.add(new TableDto(s.getTeam().getName(), s.getPosition(), s.getPoints(), s.getPlayedGames(), s.getLost(), s.getWon(), s.getDraw(), s.getGoalsAgainst(), s.getGoalsFor(), s.getGoalDifference()));
+        }
+
+        return table.stream().sorted((a, b) -> Integer.compare(a.getPosition(), b.getPosition())).toList();
+    }
+
+
+    private StandingsDto parseStandingsFromResponse(String response) {
+        StandingsDto standingsDto = new StandingsDto();
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            standingsDto = objectMapper.readValue(response, StandingsDto.class);
+        } catch (Exception e) {
+            System.err.println("Error while parsing" + e.getMessage());
+        }
+        return standingsDto;
+    }
 }

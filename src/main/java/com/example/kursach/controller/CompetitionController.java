@@ -1,7 +1,9 @@
 package com.example.kursach.controller;
 
+import com.example.kursach.dto.TableDto;
 import com.example.kursach.dto.TeamApiResponse;
 import com.example.kursach.entity.Competition;
+import com.example.kursach.entity.Standings;
 import com.example.kursach.entity.Team;
 import com.example.kursach.service.CompetitionService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -32,6 +34,13 @@ public class CompetitionController {
         List<TeamApiResponse.TeamDto> teams = competitionService.getTeamsByCompetition(competitionId);
         return ResponseEntity.ok(teams);
     }
+
+    @GetMapping("/{competitionId}/standings")
+    public ResponseEntity<List<TableDto>> getStandings(@PathVariable Long competitionId) {
+        List<TableDto> standings = competitionService.getStandings(competitionId);
+        return ResponseEntity.ok(standings);
+    }
+
 
 
 }

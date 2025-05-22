@@ -30,6 +30,7 @@ import java.util.List;
 public class CompetitionService {
 
     private final PlayerRepository playerRepository;
+    private final PlayerService playerService;
     @Value("${external.api.url}")
     private String apiUrl;
 
@@ -45,10 +46,10 @@ public class CompetitionService {
     public List<Competition> getCompetitions() {
         List<Competition> competitions = competitionRepository.findByLastUpdatedBefore(LocalDateTime.now().minusDays(1L));
 
-        if (!competitions.isEmpty()) {
-            System.out.println("HAVE INFO");
-            return competitions;
-        }
+//        if (!competitions.isEmpty()) {
+//            System.out.println("HAVE INFO");
+//            return competitions;
+//        }
         System.out.println("NO INFO");
 
         HttpHeaders headers = new HttpHeaders();
@@ -91,7 +92,7 @@ public class CompetitionService {
 
             }
 
-//            newCompetitions.add(competition);
+            newCompetitions.add(competition);
         }
 
 
@@ -144,21 +145,49 @@ public class CompetitionService {
         ResponseEntity<String> responseEntity = restTemplate.exchange(requestEntity, String.class);
 
         List<TeamApiResponse.TeamDto> teamDtos = parseTeamsFromResponse(responseEntity.getBody()).getTeams();
-
+int i = 0;
         for (TeamApiResponse.TeamDto t : teamDtos) {
             List<TeamApiResponse.TeamDto.SquadMemberDto> playersDto = t.getSquad();
             List<Player> newPlayers = new ArrayList<>();
             for (TeamApiResponse.TeamDto.SquadMemberDto p : playersDto) {
-                Player newPlayer = new Player();
-                newPlayer.setDateOfBirth(p.getDateOfBirth());
-                newPlayer.setId(p.getId());
-                newPlayer.setTeamId(t.getId());
-                newPlayer.setName(p.getName());
-                newPlayer.setNationality(p.getNationality());
-                newPlayer.setLastUpdated(LocalDateTime.now().toString());
-                newPlayer.setPosition(p.getPosition());
-                newPlayers.add(newPlayer);
+                // Пытаемся найти команду по ID
+                Team team = teamRepository.findById(t.getId()).orElseGet(() -> {
+                    Team newTeam = new Team();
+                    newTeam.setId(t.getId());
+                    newTeam.setName(t.getName());
+                    newTeam.setShortName(t.getShortName());
+                    newTeam.setTla(t.getTla());
+                    newTeam.setAddress(t.getAddress());
+                    newTeam.setFounded(t.getFounded());
+                    newTeam.setClubColors(t.getClubColors());
+                    newTeam.setVenue(t.getVenue());
+                    return teamRepository.save(newTeam);
+                });
+                if(playerRepository.existsById(p.getId())){
+                    if(i < 5 && playerRepository.findById(p.getId()).get().getShirtNumber() == null) {
+                        newPlayers.add(playerService.getPlayerById(p.getId()));
+                        i++;
+                    }
+                }else{
+                    Player newPlayer = new Player();
+                    newPlayer.setDateOfBirth(p.getDateOfBirth());
+                    newPlayer.setId(p.getId());
+                    newPlayer.setTeam(team);
+                    newPlayer.setName(p.getName());
+                    newPlayer.setNationality(p.getNationality());
+                    newPlayer.setLastUpdated(LocalDateTime.now().toString());
+                    newPlayer.setPosition(p.getPosition());
+
+                    newPlayers.add(newPlayer);
+                }
+//                if(i < 5 && playerRepository.findById(p.getId()).get().getShirtNumber() == null) {
+//                    newPlayers.add(playerService.getPlayerById(p.getId()));
+//                    i++;
+//                }else {
+//
+//                }
             }
+
 
             List<Competition> competitions = new ArrayList<>();
             for (TeamApiResponse.CompetitionDto c : t.getRunningCompetitions()) {

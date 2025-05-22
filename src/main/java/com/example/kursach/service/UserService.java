@@ -31,6 +31,10 @@ public class UserService {
             throw new IllegalArgumentException("Пользователь с таким именем уже существует");
         }
 
+        if (repository.existsByEmail(user.getEmail())) {
+            throw new IllegalArgumentException("Пользователь с таким email уже существует");
+        }
+
         return repository.save(user);
     }
 

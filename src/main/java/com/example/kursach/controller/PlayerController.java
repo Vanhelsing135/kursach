@@ -1,5 +1,6 @@
 package com.example.kursach.controller;
 
+import com.example.kursach.dto.PlayerResponseDTO;
 import com.example.kursach.dto.TeamApiResponse;
 import com.example.kursach.entity.Competition;
 import com.example.kursach.entity.Player;
@@ -24,9 +25,7 @@ public class PlayerController {
     private final PlayerService playerService;
 
     @GetMapping("/{playerId}")
-    public ResponseEntity<Player> getTeams(@PathVariable Long playerId){
-        return ResponseEntity.ok(playerService.getPlayerById(playerId));
+    public ResponseEntity<PlayerResponseDTO> getTeams(@PathVariable Long playerId) {
+        return ResponseEntity.ok(playerService.getPlayerResponseDTOById(playerId));
     }
-
-
 }

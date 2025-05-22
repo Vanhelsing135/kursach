@@ -48,7 +48,7 @@ public class MatchService {
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-Auth-Token", apiKey);
 
-        String url = UriComponentsBuilder.fromHttpUrl(apiUrl + "/matches")
+        String url = UriComponentsBuilder.fromHttpUrl(apiUrl + "competitions/2001/matches")
                 .toUriString();
 
         RequestEntity<Void> requestEntity = RequestEntity.get(url).headers(headers).build();
@@ -126,6 +126,9 @@ public class MatchService {
                 winnerId = m.getWinner().getId();
             }
             responseDtos.add(new MatchMyResponseDto(m.getId(),m.getUtcDate(),m.getStatus(),m.getVenue(),m.getMatchday(),m.getStage(),m.getGroup(),m.getLastUpdated(),m.getHomeTeam().getId(),m.getAwayTeam().getId(), m.getHomeScore(),m.getAwayScore(), winnerId, m.getCompetition().getName(),m.getSeason().getId()));
+        }
+        if(responseDtos.isEmpty()){
+            System.out.println(0);
         }
         return responseDtos;
     }

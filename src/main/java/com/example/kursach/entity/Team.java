@@ -54,6 +54,7 @@ public class Team {
     )
     private List<Competition> runningCompetitions;
 
-    @OneToMany(mappedBy = "teamId", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "team", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Player> squad;
+
 }

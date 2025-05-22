@@ -8,9 +8,11 @@ import com.example.kursach.entity.Team;
 import com.example.kursach.repository.MatchRepository;
 import com.example.kursach.repository.PlayerRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -18,7 +20,6 @@ public class QuizService {
 
     private final MatchRepository matchRepository;
     private final PlayerRepository playerRepository;
-
     public List<QuestionDto> generateQuizForMatch(Long matchId) {
         Match match = matchRepository.findById(matchId)
                 .orElseThrow(() -> new IllegalArgumentException("Match not found with id: " + matchId));
@@ -27,51 +28,121 @@ public class QuizService {
         Team awayTeam = match.getAwayTeam();
         Team winner = match.getWinner();
 
+        CompletableFuture<QuestionDto> scoreFuture = generateScoreQuestion(match);
+        CompletableFuture<QuestionDto> winnerFuture = generateWinnerQuestion(match, homeTeam, awayTeam, winner);
+        CompletableFuture<QuestionDto> playerFuture = generatePlayerQuestion(winner);
+
         List<QuestionDto> quiz = new ArrayList<>();
 
-        // Вопрос 1: счёт матча
+        try {
+            quiz.add(scoreFuture.get());
+            quiz.add(winnerFuture.get());
+            QuestionDto playerQuestion = playerFuture.get();
+            if (playerQuestion != null) quiz.add(playerQuestion);
+        } catch (Exception e) {
+            e.printStackTrace(); // Можно заменить на логгер
+        }
+
+        return quiz;
+    }
+
+    @Async
+    public CompletableFuture<QuestionDto> generateScoreQuestion(Match match) {
         String score = match.getHomeScore() + " - " + match.getAwayScore();
         List<String> scoreOptions = generateScoreOptions(match.getHomeScore(), match.getAwayScore());
-        quiz.add(new QuestionDto(
-                "С каким счётом закончился матч между " + homeTeam.getName() + " и " + awayTeam.getName() + ", который датируется " + match.getUtcDate().toLocalDate() + "?",
+        return CompletableFuture.completedFuture(new QuestionDto(
+                "С каким счётом закончился матч между " + match.getHomeTeam().getName() + " и " + match.getAwayTeam().getName() +
+                        ", который датируется " + match.getUtcDate().toLocalDate() + "?",
                 scoreOptions,
                 score
         ));
+    }
 
-        // Вопрос 2: победитель
-        String winnerAnswer;
-        if (match.getHomeScore().equals(match.getAwayScore())) {
-            winnerAnswer = "Ничья";
-        } else {
-            winnerAnswer = winner.getName();
-        }
+    @Async
+    public CompletableFuture<QuestionDto> generateWinnerQuestion(Match match, Team home, Team away, Team winner) {
+        String winnerAnswer = match.getHomeScore().equals(match.getAwayScore()) ? "Ничья" : winner.getName();
+        List<String> winnerOptions = generateWinnerOptions(home.getName(), away.getName(), match.getHomeScore(), match.getAwayScore());
 
-        List<String> winnerOptions = generateWinnerOptions(homeTeam.getName(), awayTeam.getName(), match.getHomeScore(), match.getAwayScore());
-        quiz.add(new QuestionDto(
-                "Какая команда победила в матче между " + homeTeam.getName() + " и " + awayTeam.getName() + "?",
+        return CompletableFuture.completedFuture(new QuestionDto(
+                "Какая команда победила в матче между " + home.getName() + " и " + away.getName() + "?",
                 winnerOptions,
                 winnerAnswer
         ));
+    }
 
-        // Вопрос 3: игрок под номером
-        System.out.println(winner.getId());
+    @Async
+    public CompletableFuture<QuestionDto> generatePlayerQuestion(Team winner) {
         List<Player> winnerPlayers = playerRepository.findByTeamId(winner.getId());
-        System.out.println(winnerPlayers.size());
-        Optional<Player> playerOpt = findShirtNumberPlayer(winnerPlayers, List.of(1,2,3,4,5,6,10, 9, 11, 7, 8, 6, 5,12,13,14,15,16,17,18,19,20,21,22,23));
+        Optional<Player> playerOpt = findShirtNumberPlayer(winnerPlayers, List.of(
+                1,2,3,4,5,6,10,9,11,7,8,6,5,12,13,14,15,16,17,18,19,20,21,22,23));
 
         if (playerOpt.isPresent()) {
             Player target = playerOpt.get();
             List<String> nameOptions = generatePlayerOptions(winnerPlayers, target.getName());
 
-            quiz.add(new QuestionDto(
+            return CompletableFuture.completedFuture(new QuestionDto(
                     "Кто из представителей команды " + winner.getName() + " играл под номером " + target.getShirtNumber() + "?",
                     nameOptions,
                     target.getName()
             ));
         }
 
-        return quiz;
+        return CompletableFuture.completedFuture(null);
     }
+
+//    public List<QuestionDto> generateQuizForMatch(Long matchId) {
+//        Match match = matchRepository.findById(matchId)
+//                .orElseThrow(() -> new IllegalArgumentException("Match not found with id: " + matchId));
+//
+//        Team homeTeam = match.getHomeTeam();
+//        Team awayTeam = match.getAwayTeam();
+//        Team winner = match.getWinner();
+//
+//        List<QuestionDto> quiz = new ArrayList<>();
+//
+//        // Вопрос 1: счёт матча
+//        String score = match.getHomeScore() + " - " + match.getAwayScore();
+//        List<String> scoreOptions = generateScoreOptions(match.getHomeScore(), match.getAwayScore());
+//        quiz.add(new QuestionDto(
+//                "С каким счётом закончился матч между " + homeTeam.getName() + " и " + awayTeam.getName() + ", который датируется " + match.getUtcDate().toLocalDate() + "?",
+//                scoreOptions,
+//                score
+//        ));
+//
+//        // Вопрос 2: победитель
+//        String winnerAnswer;
+//        if (match.getHomeScore().equals(match.getAwayScore())) {
+//            winnerAnswer = "Ничья";
+//        } else {
+//            winnerAnswer = winner.getName();
+//        }
+//
+//        List<String> winnerOptions = generateWinnerOptions(homeTeam.getName(), awayTeam.getName(), match.getHomeScore(), match.getAwayScore());
+//        quiz.add(new QuestionDto(
+//                "Какая команда победила в матче между " + homeTeam.getName() + " и " + awayTeam.getName() + "?",
+//                winnerOptions,
+//                winnerAnswer
+//        ));
+//
+//        // Вопрос 3: игрок под номером
+//        System.out.println(winner.getId());
+//        List<Player> winnerPlayers = playerRepository.findByTeamId(winner.getId());
+//        System.out.println(winnerPlayers.size());
+//        Optional<Player> playerOpt = findShirtNumberPlayer(winnerPlayers, List.of(1,2,3,4,5,6,10, 9, 11, 7, 8, 6, 5,12,13,14,15,16,17,18,19,20,21,22,23));
+//
+//        if (playerOpt.isPresent()) {
+//            Player target = playerOpt.get();
+//            List<String> nameOptions = generatePlayerOptions(winnerPlayers, target.getName());
+//
+//            quiz.add(new QuestionDto(
+//                    "Кто из представителей команды " + winner.getName() + " играл под номером " + target.getShirtNumber() + "?",
+//                    nameOptions,
+//                    target.getName()
+//            ));
+//        }
+//
+//        return quiz;
+//    }
 
     private List<String> generateScoreOptions(int homeScore, int awayScore) {
         Set<String> options = new HashSet<>();

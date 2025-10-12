@@ -3,7 +3,6 @@ package com.example.kursach.service;
 import com.example.kursach.dto.QuestionDto;
 import com.example.kursach.entity.Match;
 import com.example.kursach.entity.Player;
-import com.example.kursach.entity.Question;
 import com.example.kursach.entity.Team;
 import com.example.kursach.repository.MatchRepository;
 import com.example.kursach.repository.PlayerRepository;
@@ -40,7 +39,7 @@ public class QuizService {
             QuestionDto playerQuestion = playerFuture.get();
             if (playerQuestion != null) quiz.add(playerQuestion);
         } catch (Exception e) {
-            e.printStackTrace(); // Можно заменить на логгер
+            e.printStackTrace();
         }
 
         return quiz;
@@ -52,7 +51,7 @@ public class QuizService {
         List<String> scoreOptions = generateScoreOptions(match.getHomeScore(), match.getAwayScore());
         return CompletableFuture.completedFuture(new QuestionDto(
                 "С каким счётом закончился матч между " + match.getHomeTeam().getName() + " и " + match.getAwayTeam().getName() +
-                        ", который датируется " + match.getUtcDate().toLocalDate() + "?",
+                        ", который состоялся " + match.getUtcDate().toLocalDate() + "?",
                 scoreOptions,
                 score
         ));

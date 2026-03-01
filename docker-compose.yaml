@@ -13,6 +13,7 @@ services:
       - '3306'
     volumes:
       - mysql:/var/lib/mysql
+      - ./logos:/var/lib/mysql-files
 
   flyway:
     image: flyway/flyway:latest

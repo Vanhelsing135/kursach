@@ -1,4 +1,4 @@
-CREATE TABLE Question (
+CREATE TABLE IF NOT EXISTS Question (
                           id BIGINT AUTO_INCREMENT PRIMARY KEY,
                           question VARCHAR(500) NOT NULL,
                           answer_id BIGINT NOT NULL,

@@ -1,4 +1,4 @@
-package  com.example.kursach.controller;
+package com.example.kursach.controller;
 
 import com.example.kursach.dto.LoginResponseDto;
 import com.example.kursach.dto.UserDto;
@@ -7,6 +7,7 @@ import com.example.kursach.service.AuthenticationService;
 import com.example.kursach.service.JwtService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/kursach/auth")
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 public class AuthenticationController {
     private final JwtService jwtService;
 
@@ -21,6 +23,7 @@ public class AuthenticationController {
 
     @PostMapping("/signup")
     public ResponseEntity<User> register(@RequestBody UserDto userDto) {
+        log.info("Запрос на регистрацию");
         User registeredUser = authenticationService.signup(userDto);
 
         return ResponseEntity.ok(registeredUser);
@@ -28,6 +31,7 @@ public class AuthenticationController {
 
     @PostMapping("/login")
     public ResponseEntity<LoginResponseDto> authenticate(@RequestBody UserDto userDto) {
+        log.info("Запрос на вход");
         User authenticatedUser = authenticationService.authenticate(userDto);
 
         String jwtToken = jwtService.generateToken(authenticatedUser);

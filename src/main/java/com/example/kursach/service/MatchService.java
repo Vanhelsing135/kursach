@@ -60,9 +60,9 @@ public class MatchService {
         List<Match> newMatches = new ArrayList<>();
         for (MatchResponseDto.MatchDto m : matchesFromResponse.getMatches()) {
             Team homeTeam = teamRepository.findById(m.getHomeTeam().getId())
-                    .orElseGet(() -> new Team(m.getHomeTeam().getId(), m.getHomeTeam().getName(), m.getHomeTeam().getShortName(), m.getHomeTeam().getTla(), null, null, null, null, null, null));
+                    .orElseGet(() -> new Team(m.getHomeTeam().getId(), m.getHomeTeam().getName(), m.getHomeTeam().getShortName(), m.getHomeTeam().getTla(), null, null, null, null, null, null, null));
             Team awayTeam = teamRepository.findById(m.getAwayTeam().getId())
-                    .orElseGet(() -> new Team(m.getAwayTeam().getId(), m.getAwayTeam().getName(), m.getAwayTeam().getShortName(), m.getAwayTeam().getTla(), null, null, null, null, null, null));
+                    .orElseGet(() -> new Team(m.getAwayTeam().getId(), m.getAwayTeam().getName(), m.getAwayTeam().getShortName(), m.getAwayTeam().getTla(), null, null, null, null, null, null, null));
 
             teamRepository.save(homeTeam);
             teamRepository.save(awayTeam);

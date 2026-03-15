@@ -1,14 +1,7 @@
 package com.example.kursach.controller;
 
-import com.example.kursach.dto.TableDto;
-import com.example.kursach.dto.TeamApiResponse;
-import com.example.kursach.entity.Competition;
 import com.example.kursach.entity.Team;
-import com.example.kursach.repository.CompetitionRepository;
-import com.example.kursach.repository.TeamRepository;
-import com.example.kursach.service.CompetitionService;
 import com.example.kursach.service.TeamService;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
@@ -38,9 +31,9 @@ public class TeamController {
     }
 
     @GetMapping(value = "/{id}")
-    public ResponseEntity<Team> getTeamInfo(Long id) {
+    public ResponseEntity<String> getTeamInfo(@PathVariable Long id) {
         log.info("Запрос на получение информации о команде");
-        Team team = teamService.getTeamInfo(id);
+        String team = teamService.getTeamInfo(id);
         log.info("Ответ: {}", team);
         return ResponseEntity.ok(team);
     }

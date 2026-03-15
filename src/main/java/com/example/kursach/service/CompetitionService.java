@@ -8,10 +8,9 @@ import com.example.kursach.entity.*;
 import com.example.kursach.repository.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
@@ -24,9 +23,11 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class CompetitionService {
 
@@ -236,16 +237,17 @@ public class CompetitionService {
                 .orElseThrow(() -> new RuntimeException("Competition not found with ID: " + competitionId));
 
         List<Standings> standings = standingsRepository.findByCompetition(competition);
-        if (!standings.isEmpty()) {
-            List<TableDto> table = new ArrayList<>();
-            for (Standings s : standings) {
-                table.add(new TableDto(s.getTeam().getName(), s.getPosition(), s.getPoints(), s.getPlayedGames(), s.getLost(), s.getWon(), s.getDraw(), s.getGoalsAgainst(), s.getGoalsFor(), s.getGoalDifference()));
-            }
+//        if (!standings.isEmpty()) {
+//            List<TableDto> table = new ArrayList<>();
+//            for (Standings s : standings) {
+//                table.add(new TableDto(s.getTeam().getId(), s.getTeam().getName(), s.getTeam().getCrest(), s.getPosition(), s.getPoints(), s.getPlayedGames(), s.getLost(), s.getWon(), s.getDraw(), s.getGoalsAgainst(), s.getGoalsFor(), s.getGoalDifference()));
+//            }
+//
+//            return table.stream().sorted(Comparator.comparingInt(TableDto::getPosition)).toList();
+//
+//        }
 
-            return table.stream().sorted((a, b) -> Integer.compare(a.getPosition(), b.getPosition())).toList();
-
-        }
-
+        log.info("Отправка запроса на {}", apiUrl + "/competitions/" + competitionId + "/standings");
         HttpHeaders headers = new HttpHeaders();
         headers.set("X-Auth-Token", apiKey);
 
@@ -282,31 +284,31 @@ public class CompetitionService {
             standings1.setPlayedGames(s.getPlayedGames());
             standings1.setStage(standingsDto.getStandings().get(0).getStage());
             standings1.setWon(s.getWon());
+            standings1.setGoalDifference(s.getGoalDifference());
             StandingsDto.Standings.Table.TeamDto teamDto = s.getTeam();
-            if (!teamRepository.existsById(teamDto.getId())) {
-                Team team = new Team();
-                team.setShortName(teamDto.getShortName());
-                team.setName(teamDto.getName());
-                team.setId(teamDto.getId());
-                team.setTla(teamDto.getTla());
-                teamRepository.save(team);
-                standings1.setTeam(team);
-            }
-            standings1.setTeam(teamRepository.findById(teamDto.getId()).orElseThrow());
+//            if (!teamRepository.existsById(teamDto.getId())) {
+            Team team = new Team();
+            team.setShortName(teamDto.getShortName());
+            team.setName(teamDto.getName());
+            team.setId(teamDto.getId());
+            team.setTla(teamDto.getTla());
+            team.setCrest(teamDto.getCrest());
+            teamRepository.save(team);
+            standings1.setTeam(team);
+//            }
+//            standings1.setTeam(teamRepository.findById(teamDto.getId()).orElseThrow());
             newStandings.add(standings1);
-
         }
 
         standingsRepository.saveAll(newStandings);
 
         List<TableDto> table = new ArrayList<>();
         for (Standings s : newStandings) {
-            table.add(new TableDto(s.getTeam().getName(), s.getPosition(), s.getPoints(), s.getPlayedGames(), s.getLost(), s.getWon(), s.getDraw(), s.getGoalsAgainst(), s.getGoalsFor(), s.getGoalDifference()));
+            table.add(new TableDto(s.getTeam().getId(), s.getTeam().getName(), s.getTeam().getCrest(), s.getPosition(), s.getPoints(), s.getPlayedGames(), s.getLost(), s.getWon(), s.getDraw(), s.getGoalsAgainst(), s.getGoalsFor(), s.getGoalDifference()));
         }
 
-        return table.stream().sorted((a, b) -> Integer.compare(a.getPosition(), b.getPosition())).toList();
+        return table.stream().sorted(Comparator.comparingInt(TableDto::getPosition)).toList();
     }
-
 
     private StandingsDto parseStandingsFromResponse(String response) {
         StandingsDto standingsDto = new StandingsDto();

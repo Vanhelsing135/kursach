@@ -64,10 +64,8 @@ public class StandingsDto {
                 private String name;
                 private String shortName;
                 private String tla;
+                private String crest;
             }
-
         }
     }
-
-
 }

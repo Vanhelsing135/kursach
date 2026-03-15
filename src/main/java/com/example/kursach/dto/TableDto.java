@@ -8,7 +8,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TableDto {
+    private Long teamId;
     private String teamName;
+    private String teamLogo;
     private int position;
     private int points;
     private int matchesPlayed;
@@ -18,5 +20,4 @@ public class TableDto {
     private int goalAgainst;
     private int goalFor;
     private int goalDifference;
-
 }

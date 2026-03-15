@@ -14,8 +14,8 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf().disable()
-                .authorizeHttpRequests(auth -> auth.requestMatchers("/kursach/auth/**").permitAll()
+        http.cors().and().csrf().disable()
+                .authorizeHttpRequests(auth -> auth.requestMatchers("/kursach/auth/**", "/kursach/image-proxy").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
                 .formLogin().disable()

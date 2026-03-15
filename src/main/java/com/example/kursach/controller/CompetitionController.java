@@ -46,7 +46,9 @@ public class CompetitionController {
 
     @GetMapping("/{competitionId}/standings")
     public ResponseEntity<List<TableDto>> getStandings(@PathVariable Long competitionId) {
+        log.info("Запроса на получение турнирной таблицы по id: {}", competitionId);
         List<TableDto> standings = competitionService.getStandings(competitionId);
+        log.info("Ответ на получени етурнирной таблицы по id: {}, ответ: {}", competitionId, standings);
         return ResponseEntity.ok(standings);
     }
 

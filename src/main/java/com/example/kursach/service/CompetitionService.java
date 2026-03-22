@@ -310,6 +310,46 @@ public class CompetitionService {
         return table.stream().sorted(Comparator.comparingInt(TableDto::getPosition)).toList();
     }
 
+    public String getScorers(Long id) {
+        log.info("Отправка запроса на {}", apiUrl + "/competitions/" + id + "/scorers");
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Auth-Token", apiKey);
+
+        String url = UriComponentsBuilder.fromHttpUrl(apiUrl + "/competitions/" + id + "/scorers")
+                .toUriString();
+
+        RequestEntity<Void> requestEntity = RequestEntity.get(url).headers(headers).build();
+
+        ResponseEntity<String> responseEntity = restTemplate.exchange(requestEntity, String.class);
+        return responseEntity.getBody();
+    }
+
+    public String getMatches(Long id, String status) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Auth-Token", apiKey);
+
+        UriComponentsBuilder builder = UriComponentsBuilder
+                .fromHttpUrl(apiUrl + "competitions/" + id + "/matches");
+
+        if (status != null) builder.queryParam("status", status);
+
+        String url = builder.toUriString();
+        log.info("Отправка запроса на {}", url);
+
+
+        log.info("URL: {}", url);
+
+        RequestEntity<Void> request = RequestEntity
+                .get(url)
+                .headers(headers)
+                .build();
+
+        ResponseEntity<String> response =
+                restTemplate.exchange(request, String.class);
+
+        return response.getBody();
+    }
+
     private StandingsDto parseStandingsFromResponse(String response) {
         StandingsDto standingsDto = new StandingsDto();
         try {

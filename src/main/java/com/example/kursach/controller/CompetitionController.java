@@ -11,10 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.List;
@@ -52,5 +49,15 @@ public class CompetitionController {
         return ResponseEntity.ok(standings);
     }
 
+    @GetMapping("/{competitionId}/scorers")
+    public ResponseEntity<String> getScorers(@PathVariable Long competitionId){
+        log.info("Получение списка бомбардирова турнира id {}", competitionId);
+        return ResponseEntity.ok(competitionService.getScorers(competitionId));
+    }
 
+    @GetMapping("/{competitionId}/matches")
+    public ResponseEntity<String> getMatches(@PathVariable Long competitionId, @RequestParam(required = false) String status){
+        log.info("Получение списка матчей соревнования id {}", competitionId);
+        return ResponseEntity.ok(competitionService.getMatches(competitionId, status));
+    }
 }

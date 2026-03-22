@@ -10,6 +10,7 @@ import com.example.kursach.repository.TeamRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.RequestEntity;
@@ -24,6 +25,7 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MatchService {
@@ -39,70 +41,98 @@ public class MatchService {
     @Value("${external.api.key}")
     private String apiKey;
 
-    public List<MatchMyResponseDto> getMatches() throws JsonProcessingException {
+    public String getMatches(String ids, String dateFrom, String dateTo, String status, int page, int pageSize) throws JsonProcessingException {
 //        if (!matchRepository.findAll().isEmpty()) {
 //            return convertToMyDto(matchRepository.findAll());
 //        }
+        if (true) {
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("X-Auth-Token", apiKey);
 
-        System.err.println("Have data");
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("X-Auth-Token", apiKey);
+            UriComponentsBuilder builder = UriComponentsBuilder
+                    .fromHttpUrl(apiUrl + "/matches");
 
-        String url = UriComponentsBuilder.fromHttpUrl(apiUrl + "competitions/2001/matches")
-                .toUriString();
+            if (ids != null) builder.queryParam("ids", ids);
+            if (dateFrom != null) builder.queryParam("dateFrom", dateFrom);
+            if (dateTo != null) builder.queryParam("dateTo", dateTo);
+            if (status != null) builder.queryParam("status", status);
 
-        RequestEntity<Void> requestEntity = RequestEntity.get(url).headers(headers).build();
+            String url = builder.toUriString();
+            log.info("Отправка запроса на {}", url);
 
-        ResponseEntity<String> responseEntity = restTemplate.exchange(requestEntity, String.class);
 
-        MatchResponseDto matchesFromResponse = parseMatchesFromResponse(responseEntity.getBody());
+            log.info("URL: {}", url);
 
-        List<Match> newMatches = new ArrayList<>();
-        for (MatchResponseDto.MatchDto m : matchesFromResponse.getMatches()) {
-            Team homeTeam = teamRepository.findById(m.getHomeTeam().getId())
-                    .orElseGet(() -> new Team(m.getHomeTeam().getId(), m.getHomeTeam().getName(), m.getHomeTeam().getShortName(), m.getHomeTeam().getTla(), null, null, null, null, null, null, null));
-            Team awayTeam = teamRepository.findById(m.getAwayTeam().getId())
-                    .orElseGet(() -> new Team(m.getAwayTeam().getId(), m.getAwayTeam().getName(), m.getAwayTeam().getShortName(), m.getAwayTeam().getTla(), null, null, null, null, null, null, null));
+            RequestEntity<Void> request = RequestEntity
+                    .get(url)
+                    .headers(headers)
+                    .build();
 
-            teamRepository.save(homeTeam);
-            teamRepository.save(awayTeam);
+            ResponseEntity<String> response =
+                    restTemplate.exchange(request, String.class);
 
-            Team winner;
-            if (m.getScore().getFullTime().getAway() > m.getScore().getFullTime().getHome()) {
-                winner = awayTeam;
-            } else if (m.getScore().getFullTime().getAway() < m.getScore().getFullTime().getHome()) {
-                winner = homeTeam;
-            } else {
-                winner = null;
+            return response.getBody();
+        } else {
+            System.err.println("Have data");
+            HttpHeaders headers = new HttpHeaders();
+            headers.set("X-Auth-Token", apiKey);
+
+            String url = UriComponentsBuilder.fromHttpUrl(apiUrl + "competitions/2001/matches")
+                    .toUriString();
+
+            RequestEntity<Void> requestEntity = RequestEntity.get(url).headers(headers).build();
+
+            ResponseEntity<String> responseEntity = restTemplate.exchange(requestEntity, String.class);
+
+            MatchResponseDto matchesFromResponse = parseMatchesFromResponse(responseEntity.getBody());
+
+            List<Match> newMatches = new ArrayList<>();
+            for (MatchResponseDto.MatchDto m : matchesFromResponse.getMatches()) {
+                Team homeTeam = teamRepository.findById(m.getHomeTeam().getId())
+                        .orElseGet(() -> new Team(m.getHomeTeam().getId(), m.getHomeTeam().getName(), m.getHomeTeam().getShortName(), m.getHomeTeam().getTla(), null, null, null, null, null, null, null));
+                Team awayTeam = teamRepository.findById(m.getAwayTeam().getId())
+                        .orElseGet(() -> new Team(m.getAwayTeam().getId(), m.getAwayTeam().getName(), m.getAwayTeam().getShortName(), m.getAwayTeam().getTla(), null, null, null, null, null, null, null));
+
+                teamRepository.save(homeTeam);
+                teamRepository.save(awayTeam);
+
+                Team winner;
+                if (m.getScore().getFullTime().getAway() > m.getScore().getFullTime().getHome()) {
+                    winner = awayTeam;
+                } else if (m.getScore().getFullTime().getAway() < m.getScore().getFullTime().getHome()) {
+                    winner = homeTeam;
+                } else {
+                    winner = null;
+                }
+
+                Competition competition = competitionRepository.findById(m.getCompetition().getId())
+                        .orElseGet(() -> new Competition(m.getCompetition().getId(), m.getCompetition().getName(), m.getCompetition().getCode(), m.getCompetition().getType(),
+                                m.getCompetition().getEmblem(), m.getArea().getName(), null, m.getSeason().getId(), LocalDateTime.now(), null));
+
+                competitionRepository.save(competition);
+
+                Season season = seasonRepository.findById(m.getSeason().getId())
+                        .orElseGet(() -> new Season(m.getSeason().getId(), competition, LocalDate.parse(m.getSeason().getStartDate()), LocalDate.parse(m.getSeason().getEndDate()), winner));
+
+                seasonRepository.save(season);
+
+                Match match = matchRepository.findById(m.getId())
+                        .orElseGet(() -> new Match(m.getId(),
+                                OffsetDateTime.parse(m.getUtcDate()).toLocalDateTime(), m.getStatus(), null, null,
+                                m.getStage(), m.getGroup(), OffsetDateTime.parse(m.getLastUpdated()).toLocalDateTime(), homeTeam, awayTeam,
+                                m.getScore().getFullTime().getHome(), m.getScore().getFullTime().getAway(), winner, competition, season));
+
+                match.setStatus(m.getStatus());
+                match.setStage(m.getStage());
+                match.setGroup(m.getGroup());
+                match.setLastUpdated(OffsetDateTime.parse(m.getLastUpdated()).toLocalDateTime());
+
+                newMatches.add(match);
             }
 
-            Competition competition = competitionRepository.findById(m.getCompetition().getId())
-                    .orElseGet(() -> new Competition(m.getCompetition().getId(), m.getCompetition().getName(), m.getCompetition().getCode(), m.getCompetition().getType(),
-                            m.getCompetition().getEmblem(), m.getArea().getName(), null, m.getSeason().getId(), LocalDateTime.now(), null));
-
-            competitionRepository.save(competition);
-
-            Season season = seasonRepository.findById(m.getSeason().getId())
-                    .orElseGet(() -> new Season(m.getSeason().getId(), competition, LocalDate.parse(m.getSeason().getStartDate()), LocalDate.parse(m.getSeason().getEndDate()), winner));
-
-            seasonRepository.save(season);
-
-            Match match = matchRepository.findById(m.getId())
-                    .orElseGet(() -> new Match(m.getId(),
-                            OffsetDateTime.parse(m.getUtcDate()).toLocalDateTime(), m.getStatus(), null, null,
-                            m.getStage(), m.getGroup(), OffsetDateTime.parse(m.getLastUpdated()).toLocalDateTime(), homeTeam, awayTeam,
-                            m.getScore().getFullTime().getHome(), m.getScore().getFullTime().getAway(), winner, competition, season));
-
-            match.setStatus(m.getStatus());
-            match.setStage(m.getStage());
-            match.setGroup(m.getGroup());
-            match.setLastUpdated(OffsetDateTime.parse(m.getLastUpdated()).toLocalDateTime());
-
-            newMatches.add(match);
+            matchRepository.saveAll(newMatches);
+            return convertToMyDto(newMatches).toString();
         }
-
-        matchRepository.saveAll(newMatches);
-        return convertToMyDto(newMatches);
     }
 
     private MatchResponseDto parseMatchesFromResponse(String response) throws JsonProcessingException {
@@ -118,18 +148,46 @@ public class MatchService {
         return matchResponseDtos;
     }
 
-    private List<MatchMyResponseDto> convertToMyDto(List<Match> matches){
+    private List<MatchMyResponseDto> convertToMyDto(List<Match> matches) {
         List<MatchMyResponseDto> responseDtos = new ArrayList<>();
-        for(Match m : matches){
+        for (Match m : matches) {
             Long winnerId = 0L;
-            if(m.getWinner() != null){
+            if (m.getWinner() != null) {
                 winnerId = m.getWinner().getId();
             }
-            responseDtos.add(new MatchMyResponseDto(m.getId(),m.getUtcDate(),m.getStatus(),m.getVenue(),m.getMatchday(),m.getStage(),m.getGroup(),m.getLastUpdated(),m.getHomeTeam().getId(),m.getAwayTeam().getId(), m.getHomeScore(),m.getAwayScore(), winnerId, m.getCompetition().getName(),m.getSeason().getId()));
+            responseDtos.add(new MatchMyResponseDto(m.getId(), m.getUtcDate(), m.getStatus(), m.getVenue(), m.getMatchday(), m.getStage(), m.getGroup(), m.getLastUpdated(), m.getHomeTeam().getId(), m.getAwayTeam().getId(), m.getHomeScore(), m.getAwayScore(), winnerId, m.getCompetition().getName(), m.getSeason().getId()));
         }
-        if(responseDtos.isEmpty()){
+        if (responseDtos.isEmpty()) {
             System.out.println(0);
         }
         return responseDtos;
+    }
+
+    public String getMatchDetails(Long id) {
+        log.info("Отправка запроса на {}", apiUrl + "/matches/" + id);
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Auth-Token", apiKey);
+
+        String url = UriComponentsBuilder.fromHttpUrl(apiUrl + "/matches/" + id)
+                .toUriString();
+
+        RequestEntity<Void> requestEntity = RequestEntity.get(url).headers(headers).build();
+
+        ResponseEntity<String> responseEntity = restTemplate.exchange(requestEntity, String.class);
+        return responseEntity.getBody();
+    }
+
+    public String getStatisticsHead2Head(Long id) {
+        log.info("Отправка запроса на {}", apiUrl + "/matches/" + id + "/head2head");
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Auth-Token", apiKey);
+
+        String url = UriComponentsBuilder.fromHttpUrl(apiUrl + "/matches/" + id + "/head2head")
+                .toUriString();
+
+        RequestEntity<Void> requestEntity = RequestEntity.get(url).headers(headers).build();
+
+        ResponseEntity<String> responseEntity = restTemplate.exchange(requestEntity, String.class);
+        return responseEntity.getBody();
     }
 }

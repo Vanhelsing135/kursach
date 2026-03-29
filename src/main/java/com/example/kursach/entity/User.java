@@ -10,10 +10,7 @@ import org.hibernate.annotations.DynamicUpdate;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
-import java.util.HashSet;
+import java.util.*;
 
 @Entity
 @Table(name = "User")
@@ -50,6 +47,17 @@ public class User implements UserDetails {
             inverseJoinColumns = @JoinColumn(name = "team_id")
     )
     private Set<Team> favoriteTeams = new HashSet<>();
+
+    @ElementCollection
+    @CollectionTable(name = "user_favorite_teams", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "team_id")
+    private List<Integer> favTeams = new ArrayList<>();
+
+    @ElementCollection
+    @CollectionTable(name = "user_favorite_competitions", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "competition_id")
+    private List<Integer> favoriteCompetitions = new ArrayList<>();
+
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

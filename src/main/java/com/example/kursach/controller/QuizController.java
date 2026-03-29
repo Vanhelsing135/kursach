@@ -21,6 +21,4 @@ public class QuizController {
     public ResponseEntity<List<QuestionDto>> getQuiz(@PathVariable Long matchId) {
         return ResponseEntity.ok(quizService.generateQuizForMatch(matchId));
     }
-
-
 }

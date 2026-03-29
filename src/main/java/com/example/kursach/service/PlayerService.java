@@ -1,6 +1,5 @@
 package com.example.kursach.service;
 
-import com.example.kursach.dto.CompetitionsApiResponse;
 import com.example.kursach.dto.PlayerDto;
 import com.example.kursach.dto.PlayerResponseDTO;
 import com.example.kursach.entity.Competition;
@@ -11,6 +10,7 @@ import com.example.kursach.repository.PlayerRepository;
 import com.example.kursach.repository.TeamRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.RequestEntity;
@@ -22,6 +22,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class PlayerService {
@@ -50,7 +51,7 @@ public class PlayerService {
         return parsePlayerFromRepsonse(responseEntity.getBody());
     }
 
-    public PlayerResponseDTO getPlayerResponseDTOById(Long id){
+    public PlayerResponseDTO getPlayerResponseDTOById(Long id) {
         return convertToResponseDTO(getPlayerById(id));
     }
 
@@ -149,4 +150,17 @@ public class PlayerService {
         return playerResponseDTO;
     }
 
+    public String getPlayerInfo(Long id) {
+        log.info("Отправка запроса на {}", apiUrl + "/persons/" + id);
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("X-Auth-Token", apiKey);
+
+        String url = UriComponentsBuilder.fromHttpUrl(apiUrl + "/persons/" + id)
+                .toUriString();
+
+        RequestEntity<Void> requestEntity = RequestEntity.get(url).headers(headers).build();
+
+        ResponseEntity<String> responseEntity = restTemplate.exchange(requestEntity, String.class);
+        return responseEntity.getBody();
+    }
 }

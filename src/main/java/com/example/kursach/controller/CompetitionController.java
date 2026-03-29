@@ -60,4 +60,10 @@ public class CompetitionController {
         log.info("Получение списка матчей соревнования id {}", competitionId);
         return ResponseEntity.ok(competitionService.getMatches(competitionId, status));
     }
+
+    @GetMapping("/favorites")
+    public ResponseEntity<String> getFavorites(@PathVariable Long competitionId, @RequestParam(required = false) String status){
+        log.info("Получение списка матчей соревнования id {}", competitionId);
+        return ResponseEntity.ok(competitionService.getMatches(competitionId, status));
+    }
 }

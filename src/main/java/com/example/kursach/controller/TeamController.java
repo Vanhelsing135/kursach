@@ -6,10 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.List;
@@ -34,6 +31,14 @@ public class TeamController {
     public ResponseEntity<String> getTeamInfo(@PathVariable Long id) {
         log.info("Запрос на получение информации о команде");
         String team = teamService.getTeamInfo(id);
+        log.info("Ответ: {}", team);
+        return ResponseEntity.ok(team);
+    }
+
+    @GetMapping(value = "/{id}/matches")
+    public ResponseEntity<String> getTeamMatches(@PathVariable Long id, @RequestParam String status) {
+        log.info("Запрос на получение матчей команды");
+        String team = teamService.getTeamMatches(id, status);
         log.info("Ответ: {}", team);
         return ResponseEntity.ok(team);
     }
